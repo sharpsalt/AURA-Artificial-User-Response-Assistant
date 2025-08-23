@@ -1,0 +1,27 @@
+#Using axios we can do the api call
+so isko bhi insatll krlete hai humlog asie ingeneral mein
+
+srijan-verma@Srijan-Dell-G15:~/Codes/Web Dev/Project/JARVIS$ npm i -g express axios body-parser cheerio
+
+added 147 packages in 3s
+
+32 packages are looking for funding
+  run `npm fund` for details
+srijan-verma@Srijan-Dell-G15:~/Codes/Web Dev/Project/JARVIS$ npm i dotenv
+
+added 1 package, and audited 2 packages in 789ms
+
+1 package is looking for funding
+  run `npm fund` for details
+
+found 0 vulnerabilities
+srijan-verma@Srijan-Dell-G15:~/Codes/Web Dev/Project/JARVIS$ npm i groq-sdk nodemon opn say
+npm warn deprecated node-domexception@1.0.0: Use your platform's native DOMException instead
+
+added 69 packages, and audited 71 packages in 3s
+
+11 packages are looking for funding
+  run `npm fund` for details
+
+found 0 vulnerabilities
+
