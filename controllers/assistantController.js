@@ -2,9 +2,9 @@
 import searchWikipedia from "../services/wikipediaService.js";
 import getNews from "../services/newsService.js";
 import getResponse from "../services/llmService.js";
-import say from "say";
-import shell from "shelljs";
-// For now, let's create a simple learning system inline until you create the learningService.js file
+import say from "say";//as i have already installed festival (npm i -g festival) + humara website udhar se reply dega so... yes it's necessary to import
+import shell from "shelljs"; //qki humlog terminal se interact krenge so ;/
+
 class SimpleLearningSystem {
     constructor() {
         this.knowledgeBase = new Map();
@@ -12,21 +12,16 @@ class SimpleLearningSystem {
         this.availableTools = {};
         this.checkAvailableTools();
     }
-    
     checkAvailableTools() {
         const tools = ['cheese', 'scrot', 'gnome-screenshot', 'import', 'xwd', 'firefox', 'google-chrome', 'chromium'];
-        
         tools.forEach(tool => {
             shell.exec(`which ${tool}`, { silent: true }, (code) => {
                 this.availableTools[tool] = (code === 0);
             });
         });
     }
-    
-    async processCommand(command) {
-        // Simple pattern matching for now
+    async processCommand(command) {//ye simple patter match krenge 
         const intent = this.extractIntent(command);
-        
         if (intent.action && intent.target) {
             const linuxCommand = this.generateLinuxCommand(intent);
             if (linuxCommand) {
@@ -38,14 +33,13 @@ class SimpleLearningSystem {
                 };
             }
         }
-        
         return { found: false, confidence: 0 };
     }
     
     extractIntent(command) {
         const cleanCommand = command.toLowerCase();
-        let action = null;
-        let target = null;
+        let action = null;//starting me null krdenge ise
+        let target = null;//same goes for it too...
         let params = [];
         
         // Extract action
@@ -70,19 +64,16 @@ class SimpleLearningSystem {
                 params.push({ type: words[i], value: words[i + 1] });
             }
         }
-        
         return { action, target, params };
     }
     
     generateLinuxCommand(intent) {
         const { action, target, params } = intent;
-        
         if (action === 'open') {
             if (target === 'terminal') return 'gnome-terminal || xterm || konsole';
             if (target === 'camera') return 'cheese || guvcview || kamoso';
             if (target === 'firefox') return 'firefox || firefox-esr';
         }
-        
         if (action === 'create') {
             if (target === 'folder') {
                 const name = params.find(p => p.type === 'named' || p.type === 'called')?.value || 'new_folder';
@@ -94,7 +85,6 @@ class SimpleLearningSystem {
                 return `touch "${name}"`;
             }
         }
-        
         if (action === 'take') {
             if (target === 'picture') {
                 // Check if it's a selfie/camera picture vs screenshot
@@ -267,10 +257,9 @@ export async function virtualAssistant(req, res) {
                 await executeActions(learningResult.actions, originalText, learningResult.confidence, res);
             }
         } else {
-            // Fallback to LLM with learning
+            console.error("")
             console.log("Learning system couldn't handle command, using LLM");
             
-            // Enhanced LLM prompt for Linux command generation
             const enhancedPrompt = `
 User said: "${originalText}"
 This is a Linux system. If this is a system command request, respond with:
@@ -284,7 +273,6 @@ Examples:
 - "create folder named test" → COMMAND: mkdir test
 - "take screenshot" → COMMAND: gnome-screenshot -f ~/screenshot_$(date +%Y%m%d_%H%M%S).png
 `;
-
             try {
                 const llmResponse = await getResponse(enhancedPrompt);
                 console.log(`LLM response: ${llmResponse}`);
@@ -295,20 +283,19 @@ Examples:
                     const command = commandMatch[1].trim();
                     const explanation = llmResponse.match(/EXPLANATION:\s*([^\n]+)/)?.[1] || "Executing command";
                     
-                    // Ask for confirmation for LLM-generated commands
+                    // Ask for confirmation for LLM-generated commands...
                     pendingExecution = {
                         actions: [command],
+                        // originalCommand: Text,
                         originalCommand: originalText,
                         confidence: 0.7,
                         isLLMGenerated: true,
                         explanation: explanation
                     };
-                    
                     const message = `I think you want me to run: "${command}". ${explanation}. Should I proceed? Say 'yes' or 'no'.`;
                     say.speak(message);
                     res.status(200).json({ message, requiresConfirmation: true });
                 } else {
-                    // Regular conversation response
                     await say.speak(llmResponse);
                     res.status(200).json({ message: llmResponse });
                 }
@@ -319,7 +306,6 @@ Examples:
                 res.status(400).json({ error: errorMsg });
             }
         }
-
     } catch (error) {
         console.error("Error in virtualAssistant:", error);
         say.speak("An error occurred. Please try again.");
@@ -327,9 +313,7 @@ Examples:
     }
 }
 
-/**
- * Execute confirmed command
- */
+//Execute confirmed commands...
 async function executeConfirmedCommand(res) {
     if (!pendingExecution) {
         res.status(400).json({ error: "No pending command to execute." });
@@ -346,16 +330,12 @@ async function executeConfirmedCommand(res) {
     pendingExecution = null;
 }
 
-/**
- * Execute a list of actions
- */
+//Execute a list of actions...
 async function executeActions(actions, originalCommand, confidence, res) {
     try {
         const results = [];
-        
         for (const action of actions) {
             console.log(`Executing action: ${action}`);
-            
             if (action.startsWith('fetch_news')) {
                 // Handle news fetching
                 const newsData = await getNews();
@@ -376,12 +356,11 @@ async function executeActions(actions, originalCommand, confidence, res) {
             }
         }
 
-        // Learn from successful execution
+        // Learn from successful execution(more of like RF Learning)
         if (results.every(r => !r.startsWith('Error:'))) {
             learningSystem.learnFromSuccess(originalCommand, actions);
             console.log(`Learned new pattern for: "${originalCommand}"`);
         }
-
         const message = results.join('\n') || 'Commands executed successfully';
         say.speak(message.length > 100 ? 'Commands executed successfully' : message);
         res.status(200).json({ 
@@ -389,18 +368,17 @@ async function executeActions(actions, originalCommand, confidence, res) {
             confidence,
             actionsExecuted: actions.length
         });
-
     } catch (error) {
         console.error("Error executing actions:", error);
         const errorMsg = "Sorry, I couldn't execute that command.";
+        // say.speak(errorMsg,"Samantha")
+        //i want to this website to speak in my voice but anyways i'm okay with it...
         say.speak(errorMsg);
         res.status(500).json({ error: errorMsg });
     }
 }
 
-/**
- * Get learning statistics endpoint
- */
+//Getting learning statistics endpoint(check on ur terminal/bash)
 export async function getLearningStats(req, res) {
     try {
         const stats = learningSystem.getStats();
