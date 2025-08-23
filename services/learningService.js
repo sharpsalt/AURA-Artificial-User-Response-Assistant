@@ -125,6 +125,7 @@ class LearningSystem {
 
         return similarity;
     }
+
     generateLinuxCommand(intent) {
         const { action, target, params } = intent;
         let commands = [];
@@ -217,7 +218,6 @@ class LearningSystem {
             intentPatterns: this.intentPatterns.size
         };
     }
-    
 }
 
 export default LearningSystem;

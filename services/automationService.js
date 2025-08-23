@@ -27,7 +27,7 @@ const automationService = {
     },
     /**
      * Opens ChatGPT and writes a prompt.
-     * @param {string} prompt The text prompt to type into Generative Pretrained Transform.
+     * @param {string} prompt The text prompt to type into ChatGPT.
      */
     openChatGPTAndWriteLetter: async (prompt) => {
         const browser = await puppeteer.launch({ headless: false });
