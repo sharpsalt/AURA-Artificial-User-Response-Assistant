@@ -1,0 +1,150 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>J.A.R.V.I.S. Assistant</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+      @import url("https://fonts.googleapis.com/css2?family=Orbitron:wght@500&display=swap");
+      body {
+        font-family: "Orbitron", sans-serif;
+      }
+      .neon-text {
+        text-shadow: 0 0 5px #00eaff, 0 0 10px #00eaff, 0 0 20px #00eaff;
+      }
+      .neon-btn {
+        box-shadow: 0 0 8px #00eaff, 0 0 12px #00eaff;
+      }
+      .pulse-animation {
+        animation: pulse 1s infinite alternate;
+      }
+      @keyframes pulse {
+        0% {
+          text-shadow: 0 0 5px #00eaff, 0 0 10px #00eaff;
+        }
+        100% {
+          text-shadow: 0 0 10px #00eaff, 0 0 20px #00eaff;
+        }
+      }
+    </style>
+  </head>
+  <body class="flex items-center justify-center min-h-screen bg-gray-900 text-white">
+    <div class="text-center p-8 md:p-16 rounded-xl border border-gray-700 bg-gray-800 shadow-lg">
+      <h1 class="text-3xl md:text-5xl font-bold mb-4 neon-text">
+        J.A.R.V.I.S. Assistant
+      </h1>
+      <p class="text-sm md:text-base text-gray-400 mb-8">
+        Your personal voice-activated assistant.
+      </p>
+
+      <div class="relative w-full max-w-lg mx-auto">
+        <div class="p-4 md:p-6 bg-gray-700 rounded-lg mb-6 min-h-[100px] flex items-center justify-center">
+          <p id="textData" class="text-lg md:text-xl text-gray-300">
+            Awaiting Command...
+          </p>
+        </div>
+        <div id="confirmationBox" class="p-4 bg-yellow-900 border border-yellow-700 text-yellow-300 rounded-lg hidden">
+          <p id="confirmationText" class="text-sm md:text-base"></p>
+        </div>
+      </div>
+
+      <button
+        id="statusBtn"
+        class="mt-4 px-6 py-3 rounded-full bg-blue-600 text-white font-semibold transition-transform transform hover:scale-105 neon-btn focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 focus:ring-offset-gray-900"
+      >
+        <span class="text-lg md:text-xl">⚪ Status: Passive</span>
+      </button>
+    </div>
+    <script>
+      const textData = document.getElementById("textData");
+      const confirmationBox = document.getElementById("confirmationBox");
+      const confirmationText = document.getElementById("confirmationText");
+      const statusBtn = document.getElementById("statusBtn");
+      const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+      if (!SpeechRecognition) {
+        textData.textContent = "Speech Recognition not supported in this browser.";
+      } else {
+        window.onload = startPassiveRecognition;
+      }
+      function startPassiveRecognition() {
+        textData.textContent = "Awaiting activation phrase...";
+        statusBtn.innerHTML = '<span class="text-lg md:text-xl"> Status: Passive</span>';
+        const recognition = new SpeechRecognition();
+        recognition.lang = "en-US";
+        recognition.interimResults = false;
+        recognition.continuous = false;
+        recognition.onresult = (event) => {
+          const transcript = event.results[0][0].transcript.toLowerCase().trim();
+          console.log("Passive recognition hears:", transcript);
+          if (transcript.includes('jarvis')) {
+            recognition.stop();
+            startActiveRecognition();
+          } else {
+            recognition.start();
+          }
+        };
+        recognition.onerror = (event) => {
+          console.error("Passive recognition error:", event.error);
+          if (event.error === 'no-speech') {
+            recognition.start(); //Restart krdega if no speech is detected...
+          }
+        };
+        recognition.onend = () => {
+          if (statusBtn.textContent.includes('Passive')) {
+            startPassiveRecognition();
+          }
+        };
+        recognition.start();
+      }
+      function startActiveRecognition() {
+        textData.textContent = "👂 Listening for command...";
+        textData.classList.add("pulse-animation");
+        statusBtn.innerHTML = '<span class="text-lg md:text-xl"> Status: Active</span>';
+        const recognition = new SpeechRecognition();
+        recognition.lang = "en-US";
+        recognition.interimResults = false;
+        recognition.continuous = false;
+        recognition.onresult = async ({ results }) => {
+          const recognizedText = results[0][0].transcript;
+          console.log("Active recognition hears:", recognizedText);
+          textData.classList.remove("pulse-animation");
+          textData.textContent = `🗣️ You: ${recognizedText}`;
+          try {
+            const response = await fetch("http://localhost:8080/jarvis/virtualAssistant", {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({ text: recognizedText }),
+            });
+            const data = await response.json();
+            console.log("Backend response:", data);
+            if (response.ok) {
+              if (data.requiresConfirmation) {
+                confirmationBox.classList.remove("hidden");
+                confirmationText.textContent = data.message;
+              } else {
+                confirmationBox.classList.add("hidden");
+                textData.textContent = `🤖 J.A.R.V.I.S.: ${data.message}`;
+              }
+            } else {
+              textData.textContent = ` Error: ${data.error || "An error occurred."}`;
+            }
+          } catch (error) {
+            console.error("Fetch error:", error);
+            textData.textContent = " Error sending request.";
+          }
+        };
+        recognition.onerror = (event) => {
+          console.error("Active recognition error:", event.error);
+          textData.classList.remove("pulse-animation");
+          textData.textContent = " Error: " + event.error;
+        };
+        recognition.onend = () => {
+          console.log("Active recognition ended. Returning to passive mode.");
+          startPassiveRecognition();
+        };
+        recognition.start();
+      }
+    </script>
+  </body>
+</html>
