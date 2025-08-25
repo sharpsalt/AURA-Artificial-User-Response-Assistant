@@ -1,4 +1,4 @@
-#AURA-Arificial User Response Assistant
+### AURA-Arificial User Response Assistant
 > **J**ust **A** **R**ather **V**ery **I**ntelligent **S**ystem
 
 An advanced AI-powered virtual assistant with voice recognition, learning capabilities, and system automation features. Inspired by Tony Stark's JARVIS from Iron Man.
@@ -49,7 +49,7 @@ An advanced AI-powered virtual assistant with voice recognition, learning capabi
 
 1. **Clone the repository**
 ```bash
-git clone https://github.com/sharpsalt/.git
+git clone https://github.com/sharpsalt/AURA-Artificial-User-Response-Assistant-.git
 cd jarvis-assistant
 ```
 
