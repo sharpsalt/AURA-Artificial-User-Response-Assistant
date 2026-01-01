@@ -98,6 +98,14 @@
         recognition.start();
       }
       function startActiveRecognition() {
+        textData.textContent = "👂 Listening for command...";
+        textData.classList.add("pulse-animation");
+        statusBtn.innerHTML = '<span class="text-lg md:text-xl"> Status: Active</span>';
+        const recognition = new SpeechRecognition();
+        recognition.lang = "en-US";
+        recognition.interimResults = false;
+        recognition.continuous = false;
+        recognition.onresult = async ({ results }) => {
           const recognizedText = results[0][0].transcript;
           console.log("Active recognition hears:", recognizedText);
           textData.classList.remove("pulse-animation");
