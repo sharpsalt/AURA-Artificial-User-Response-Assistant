@@ -125,7 +125,98 @@ class LearningSystem {
 
         return similarity;
     }
+    generateLinuxCommand(intent) {
+        const { action, target, params } = intent;
+        let commands = [];
+        if (action === 'open') {
+            if (target === 'terminal') {
+                commands.push('gnome-terminal');
+            } else if (target === 'camera') {
+                commands.push('cheese');
+            } else {
+                const appName = params.find(p => p.type === 'named' || p.type === 'called')?.value;
+                if (appName) {
+                    commands.push(`${appName}`);
+                }
+            }
+        } else if (action === 'create' || action === 'make') {
+            if (target === 'folder') {
+                const folderName = params.find(p => p.type === 'named' || p.type === 'called')?.value || 'new_folder';
+                const location = params.find(p => p.type === 'in')?.value || '.';
+                commands.push(`mkdir -p "${location}/${folderName}"`);
+            } else if (target === 'file') {
+                const fileName = params.find(p => p.type === 'named' || p.type === 'called')?.value || 'new_file.txt';
+                const location = params.find(p => p.type === 'in')?.value || '.';
+                commands.push(`touch "${location}/${fileName}"`);
+            }
+        } else if (action === 'search') {
+            const searchTerm = params.find(p => p.type === 'for')?.value;
+            const platform = params.find(p => p.type === 'on')?.value || 'google';
+            
+            if (platform.includes('firefox') || platform === 'firefox') {
+                commands.push(`firefox "https://www.google.com/search?q=${encodeURIComponent(searchTerm)}"`);
+            } else {
+                commands.push(`xdg-open "https://www.google.com/search?q=${encodeURIComponent(searchTerm)}"`);
+            }
+        } else if (action === 'take') {
+            if (target === 'picture' || target === 'photo' || target === 'screenshot') {
+                commands.push('gnome-screenshot -f ~/screenshot_$(date +%Y%m%d_%H%M%S).png');
+            }
+        }
 
+        return commands;
+    }
+
+    async processCommand(command) {
+        if (this.knowledgeBase.has(command)) {
+            const pattern = this.knowledgeBase.get(command);
+            return {
+                found: true,
+                actions: pattern.actions,
+                confidence: 1.0,
+                source: 'exact_match'
+            };
+        }
+
+        const similarCommands = this.findSimilarCommands(command);
+        if (similarCommands.length > 0) {
+            const bestMatch = similarCommands[0];
+            return {
+                found: true,
+                actions: bestMatch.pattern.actions,
+                confidence: bestMatch.similarity,
+                source: 'similar_match',
+                originalCommand: bestMatch.command
+            };
+        }
+
+        const intent = this.extractIntent(command);
+        if (intent.confidence > 0.5) {
+            const generatedCommands = this.generateLinuxCommand(intent);
+            if (generatedCommands.length > 0) {
+                return {
+                    found: true,
+                    actions: generatedCommands,
+                    confidence: intent.confidence,
+                    source: 'generated',
+                    intent
+                };
+            }
+        }
+
+        return {
+            found: false,
+            confidence: 0,
+            intent
+        };
+    }
+    getStats() {
+        return {
+            totalCommands: this.knowledgeBase.size,
+            totalHistory: this.commandHistory.length,
+            intentPatterns: this.intentPatterns.size
+        };
+    }
     
 }
 
