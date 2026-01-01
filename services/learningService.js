@@ -76,6 +76,56 @@ class LearningSystem {
         if (params.length > 0) confidence += 0.3;
         return confidence;
     }
+    learnFromSuccess(command, executedActions) {
+        const intent = this.extractIntent(command);
+        const pattern = {
+            intent,
+            actions: executedActions,
+            timestamp: Date.now(),
+            success: true
+        };
+
+        this.knowledgeBase.set(command, pattern);
+        this.commandHistory.push(pattern);
+        const intentKey = `${intent.action}_${intent.target}`;
+        if (!this.intentPatterns.has(intentKey)) {
+            this.intentPatterns.set(intentKey, []);
+        }
+        this.intentPatterns.get(intentKey).push(pattern);
+        
+        this.saveKnowledge();
+    }
+    findSimilarCommands(command) {
+        const currentIntent = this.extractIntent(command);
+        const similarCommands = [];
+
+        for (const [storedCommand, pattern] of this.knowledgeBase) {
+            const similarity = this.calculateSimilarity(currentIntent, pattern.intent);
+            if (similarity > 0.6) {
+                similarCommands.push({
+                    command: storedCommand,
+                    pattern,
+                    similarity
+                });
+            }
+        }
+
+        return similarCommands.sort((a, b) => b.similarity - a.similarity);
+    }
+
+    calculateSimilarity(intent1, intent2) {
+        let similarity = 0;
+        
+        if (intent1.action === intent2.action) similarity += 0.5;
+        if (intent1.target === intent2.target) similarity += 0.3;
+        const params1 = intent1.params.map(p => p.type);
+        const params2 = intent2.params.map(p => p.type);
+        const commonParams = params1.filter(p => params2.includes(p));
+        similarity += (commonParams.length / Math.max(params1.length, params2.length)) * 0.2;
+
+        return similarity;
+    }
+
     
 }
 
