@@ -2,15 +2,16 @@ import express from 'express';
 import dotenv from "dotenv";
 import colors from "colors";
 import bodyParser from "body-parser";
-import virtualRoute from "./routes/virtualRoute.js";
+import virtualRoute from "./routes/virtualRoute.js"
 import cors from "cors";
-import path from "path";
-import { fileURLToPath } from "url";
+import path from 'path';
+import { fileURLToPath } from 'url';
 
 dotenv.config();
 const app = express();
 const PORT = process.env.PORT || 8080;
 
+// Get __dirname equivalent in ES modules
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
